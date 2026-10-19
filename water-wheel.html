@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Water-Wheel</title>
+    <style>
+        body { margin: 0; background: black; }
+        canvas { display: block; margin: auto; background: black; }
+    </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const cx = 400;
+const cy = 300;
+const r = 50;
+const R = 100;
+const half = R * 0.5;
+const numSpokes = 10;
+
+function draw() {
+    // Clear background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw box
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(250, 200, 300, 200);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(252, 202, 296, 196);
+
+    // Draw pipes
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(200, 270, 150, 20); // Left pipe
+    ctx.fillRect(200, 330, 150, 20); // Right pipe
+    ctx.fillStyle = 'gray';
+    ctx.fillRect(200, 300, 150, 3); // Connecting line
+
+    // Draw water wheel outline
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 48, 0, Math.PI * 2);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+
+    // Draw spokes
+    const angle = performance.now() / 1000; // seconds
+
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < numSpokes; i++) {
+        const a = angle + i * (2 * Math.PI / numSpokes);
+        const dx = Math.cos(a) * half;
+        const dy = Math.sin(a) * half;
+
+        ctx.beginPath();
+        ctx.moveTo(cx - dx, cy - dy);
+        ctx.lineTo(cx + dx, cy + dy);
+        ctx.stroke();
+    }
+
+    requestAnimationFrame(draw);
+}
+
+// Start animation
+draw();
+</script>
+</body>
+</html>

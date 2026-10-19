@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maze Generator</title>
+<style>
+  body {
+    margin: 0;
+    background: #2f2f2f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  canvas {
+    background: #d3d3d3;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="mazeCanvas"></canvas>
+
+<script>
+const CELL_COUNT_X = 30;
+const CELL_COUNT_Y = 22;
+const CELL_SIZE = 40;
+const WALL_THICKNESS = 4;
+
+const canvas = document.getElementById("mazeCanvas");
+canvas.width = CELL_COUNT_X * CELL_SIZE;
+canvas.height = CELL_COUNT_Y * CELL_SIZE;
+const ctx = canvas.getContext("2d");
+
+const DIR = { UP: 0, RIGHT: 1, DOWN: 2, LEFT: 3 };
+const DIR_COUNT = 4;
+
+let maze = [];
+let stack = [];
+
+function createCell() {
+  return {
+    walls: [true, true, true, true],
+    visited: false
+  };
+}
+
+function isValid(x, y) {
+  return x >= 0 && x < CELL_COUNT_X && y >= 0 && y < CELL_COUNT_Y;
+}
+
+function getNeighbor(x, y, dir) {
+  switch (dir) {
+    case DIR.UP: return { x, y: y - 1 };
+    case DIR.RIGHT: return { x: x + 1, y };
+    case DIR.DOWN: return { x, y: y + 1 };
+    case DIR.LEFT: return { x: x - 1, y };
+  }
+}
+
+function getOpposite(dir) {
+  return (dir + 2) % 4;
+}
+
+function generateMaze(startX, startY) {
+  maze = [];
+  for (let x = 0; x < CELL_COUNT_X; x++) {
+    maze[x] = [];
+    for (let y = 0; y < CELL_COUNT_Y; y++) {
+      maze[x][y] = createCell();
+    }
+  }
+
+  stack = [];
+  let x = startX;
+  let y = startY;
+
+  maze[x][y].visited = true;
+  stack.push({ x, y });
+
+  let visitCount = 1;
+  const totalCells = CELL_COUNT_X * CELL_COUNT_Y;
+
+  while (visitCount < totalCells) {
+    let neighbors = [];
+    let dirs = [];
+
+    for (let d = 0; d < DIR_COUNT; d++) {
+      let n = getNeighbor(x, y, d);
+      if (isValid(n.x, n.y) && !maze[n.x][n.y].visited) {
+        neighbors.push(n);
+        dirs.push(d);
+      }
+    }
+
+    if (neighbors.length > 0) {
+      let i = Math.floor(Math.random() * neighbors.length);
+      let chosen = neighbors[i];
+      let dir = dirs[i];
+      let opp = getOpposite(dir);
+
+      maze[x][y].walls[dir] = false;
+      maze[chosen.x][chosen.y].walls[opp] = false;
+
+      x = chosen.x;
+      y = chosen.y;
+
+      maze[x][y].visited = true;
+      visitCount++;
+
+      stack.push({ x, y });
+    } else if (stack.length > 0) {
+      let prev = stack.pop();
+      x = prev.x;
+      y = prev.y;
+    }
+  }
+}
+
+function drawWall(x, y, dir) {
+  const px = x * CELL_SIZE;
+  const py = y * CELL_SIZE;
+
+  ctx.fillStyle = "black";
+
+  switch (dir) {
+    case DIR.UP:
+      ctx.fillRect(px, py, CELL_SIZE, WALL_THICKNESS);
+      break;
+    case DIR.DOWN:
+      ctx.fillRect(px, py + CELL_SIZE - WALL_THICKNESS, CELL_SIZE, WALL_THICKNESS);
+      break;
+    case DIR.LEFT:
+      ctx.fillRect(px, py, WALL_THICKNESS, CELL_SIZE);
+      break;
+    case DIR.RIGHT:
+      ctx.fillRect(px + CELL_SIZE - WALL_THICKNESS, py, WALL_THICKNESS, CELL_SIZE);
+      break;
+  }
+}
+
+function drawMaze() {
+  ctx.fillStyle = "#d3d3d3";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let x = 0; x < CELL_COUNT_X; x++) {
+    for (let y = 0; y < CELL_COUNT_Y; y++) {
+      for (let d = 0; d < DIR_COUNT; d++) {
+        if (maze[x][y].walls[d]) {
+          drawWall(x, y, d);
+        }
+      }
+    }
+  }
+
+  ctx.fillStyle = "#555";
+  ctx.font = "16px Arial";
+  ctx.fillText("Press SPACE or R to regenerate maze", 10, canvas.height - 10);
+}
+
+function regenerate() {
+  generateMaze(
+    Math.floor(Math.random() * CELL_COUNT_X),
+    Math.floor(Math.random() * CELL_COUNT_Y)
+  );
+  drawMaze();
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.key.toLowerCase() === "r") {
+    regenerate();
+  }
+});
+
+regenerate();
+</script>
+
+</body>
+</html>

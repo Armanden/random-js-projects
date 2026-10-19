@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smallest Circle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #controls {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #startBtn { background: #007bff; color: white; }
+        #startBtn:hover { background: #0056b3; }
+        #clearBtn { background: #dc3545; color: white; }
+        #clearBtn:hover { background: #bd2130; }
+        canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <button id="startBtn">Start</button>
+        <button id="clearBtn">Clear</button>
+    </div>
+    <canvas id="plotCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('plotCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let points = [];
+        let circle = null;
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            points.push({x, y});
+            circle = null; 
+            draw();
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (points.length === 0) return;
+            circle = makeCircle(points);
+            draw();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            points = [];
+            circle = null;
+            draw();
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#333';
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+
+            if (circle && circle.r > 0) {
+                ctx.strokeStyle = '#28a745';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                ctx.fillStyle = '#dc3545';
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+		//welz algorithm
+        function makeCircle(points) {
+            const shuffled = [...points];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return welzl(shuffled, [], shuffled.length);
+        }
+
+        function welzl(P, R, n) {
+            if (n === 0 || R.length === 3) {
+                return trivialCircle(R);
+            }
+            const p = P[n - 1];
+            const c = welzl(P, R, n - 1);
+            if (isInCircle(c, p)) {
+                return c;
+            }
+            return welzl(P, [...R, p], n - 1);
+        }
+
+        function isInCircle(c, p) {
+            if (!c) return false;
+            const dx = c.x - p.x;
+            const dy = c.y - p.y;
+            return (dx * dx + dy * dy) <= (c.r * c.r) + 1e-9;
+        }
+
+        function trivialCircle(R) {
+            if (R.length === 0) return { x: 0, y: 0, r: 0 };
+            if (R.length === 1) return { x: R[0].x, y: R[0].y, r: 0 };
+            if (R.length === 2) return dialogCircle(R[0], R[1]);
+            return circumcircle(R[0], R[1], R[2]);
+        }
+
+        function dialogCircle(p1, p2) {
+            return {
+                x: (p1.x + p2.x) / 2,
+                y: (p1.y + p2.y) / 2,
+                r: Math.hypot(p1.x - p2.x, p1.y - p2.y) / 2
+            };
+        }
+
+        function circumcircle(A, B, C) {
+            const D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+            if (Math.abs(D) < 1e-9) return dialogCircle(A, B); 
+            const ux = ((A.x * A.x + A.y * A.y) * (B.y - C.y) + (B.x * B.x + B.y * B.y) * (C.y - A.y) + (C.x * C.x + C.y * C.y) * (A.y - B.y)) / D;
+            const uy = ((A.x * A.x + A.y * A.y) * (C.x - B.x) + (B.x * B.x + B.y * B.y) * (A.x - C.x) + (C.x * C.x + C.y * C.y) * (B.x - A.x)) / D;
+            const r = Math.hypot(ux - A.x, uy - A.y);
+            return { x: ux, y: uy, r: r };
+        }
+    </script>
+</body>
+</html>

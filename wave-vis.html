@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wave Visualizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+    }
+    .container {
+      margin-top: 20px;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+    canvas {
+      margin-top: 20px;
+      background: #020617;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Wave Visualizer</h2>
+
+<div class="container">
+  <input type="number" id="speed" placeholder="Wave speed (m/s)" value="340">
+  <input type="number" id="frequency" placeholder="Frequency (Hz)" value="5">
+  <p id="result">Wavelength: --</p>
+</div>
+
+<canvas id="waveCanvas" width="600" height="300"></canvas>
+
+<script>
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+
+let phase = 0;
+
+function calculateWavelength(speed, frequency) {
+  if (frequency === 0) return 0;
+  return speed / frequency;
+}
+
+function drawWave(wavelength) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#38bdf8";
+  ctx.lineWidth = 2;
+
+  for (let x = 0; x < canvas.width; x++) {
+    let y = canvas.height / 2 +
+            50 * Math.sin((2 * Math.PI / wavelength) * x + phase);
+    ctx.lineTo(x, y);
+  }
+
+  ctx.stroke();
+}
+
+function update() {
+  const speed = parseFloat(document.getElementById("speed").value) || 0;
+  const frequency = parseFloat(document.getElementById("frequency").value) || 0;
+
+  const wavelength = calculateWavelength(speed, frequency);
+
+  document.getElementById("result").innerText =
+    "Wavelength: " + wavelength.toFixed(2) + " m";
+
+  drawWave(wavelength);
+
+  phase += 0.05; // animation speed
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>
